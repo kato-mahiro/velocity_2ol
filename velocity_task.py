@@ -15,7 +15,7 @@ class velocity_task_0:
         is_done = False
         fitness = 0.0
         while(not is_done):
-            output = net.activate(input)
+            output = net.activate([input])
             history.append([env.target_v, output])
             input, error, is_done = env.step(output)
             fitness -= error
@@ -69,11 +69,11 @@ class velocity_env:
         
         self.pre_target_v = None
         
-        return([1, self.target_v])
+        return(self.target_v)
     
     def step(self, net_output):
-        observation = [1, self.target_v - net_output[0] ]
-        error = abs(observation[1])
+        observation = self.target_v - net_output[0]
+        error = abs(observation)
 
         if(self.order == 2):
             self.target_v += self.a
