@@ -15,7 +15,7 @@ class velocity_task_0:
         is_done = False
         fitness = 0.0
         while(not is_done):
-            output = net.activate([input])
+            output = net.activate(input)
             history.append([env.target_v, output])
             input, error, is_done = env.step(output)
             fitness -= error
@@ -65,13 +65,15 @@ class velocity_env:
             self.a = random.uniform(-0.1, 0.1)
             self.asserted_stag = 10
             self.stag = 1
-            self.setting_change_prob = 0.3
+            self.setting_change_prob = 1.0
         
-        return(self.target_v)
+        self.pre_target_v = None
+        
+        return([1, self.target_v])
     
     def step(self, net_output):
-        observation = self.target_v - net_output[0]
-        error = abs(observation)
+        observation = [1, self.target_v - net_output[0] ]
+        error = abs(observation[1])
 
         if(self.order == 2):
             self.target_v += self.a
@@ -79,12 +81,22 @@ class velocity_env:
                 self.target_v = 1.0
             elif(self.target_v < 0.0):
                 self.target_v = 0.0
-            self.stag += 1
-            #aがasserted_stagで設定したステップ数以上変化していない場合には一定確率でaを変更
+            
+            #target_vがasserted_stagで設定したステップ数以上変化していない場合には一定確率でaを変更
+            if(self.pre_target_v == self.target_v):
+                self.stag += 1
+            else:
+                self.stag = 1
             if(self.stag >= self.asserted_stag):
                 if random.random() < self.setting_change_prob:
-                    self.a = random.uniform(-0.2, 0.2)
-                    self.stag = 1
+                    if(self.target_v == 1.0):
+                        self.a = random.uniform(-0.2, 0.0)
+                    elif(self.target_v == 0.0):
+                        self.a = random.uniform(0.0, 0.2)
+                    else:
+                        self.a = random.uniform(-0.2, 0.2)
+
+        self.pre_target_v = self.target_v
 
         self.step_num += 1
         if(self.step_num <= 100):
