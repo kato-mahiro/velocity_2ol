@@ -52,7 +52,7 @@ class velocity_env:
         self.a = 0
 
     def reset(self):
-        self.step_num = 0
+        self.step_num = 1
         self.a_stag = 1
         if(self.order == 0):
             self.target_v = 0.5
@@ -63,7 +63,9 @@ class velocity_env:
         elif(self.order == 2):
             self.target_v = random.uniform(0.0, 1.0)
             self.a = random.uniform(-0.1, 0.1)
-            self.a_stag = 1
+            self.asserted_stag = 10
+            self.stag = 1
+            self.setting_change_prob = 0.3
         
         return(self.target_v)
     
@@ -77,17 +79,17 @@ class velocity_env:
                 self.target_v = 1.0
             elif(self.target_v < 0.0):
                 self.target_v = 0.0
-            self.a_stag += 1
-            #aが10step以上変化していない場合には一定確率でaを変更
-            if(self.a_stag >= 5):
-                if random.random() < 0.5:
-                    self.a = random.uniform(-0.1, 0.1)
-                    self.a_stag = 1
+            self.stag += 1
+            #aがasserted_stagで設定したステップ数以上変化していない場合には一定確率でaを変更
+            if(self.stag >= self.asserted_stag):
+                if random.random() < self.setting_change_prob:
+                    self.a = random.uniform(-0.2, 0.2)
+                    self.stag = 1
 
         self.step_num += 1
         if(self.step_num <= 100):
-            done = True
-        else:
             done = False
+        else:
+            done = True
 
         return observation, error, done
