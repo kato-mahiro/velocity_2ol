@@ -8,17 +8,23 @@ class velocity_task_0:
         self.order = 0
     
     def eval_fitness(self, net):
-        history=[]
-        net.reset()
-        env = velocity_env(self.order)
-        input = env.reset()
-        is_done = False
+        n_loop = 10
+
         fitness = 0.0
-        while(not is_done):
-            output = net.activate([input])
-            history.append([env.target_v, output])
-            input, error, is_done = env.step(output)
-            fitness -= error
+        for n in range(n_loop):
+            history=[]
+            net.reset()
+            env = velocity_env(self.order)
+            input = env.reset()
+            is_done = False
+            while(not is_done):
+                output = net.activate([1, input])
+                history.append([env.target_v, output])
+                input, error, is_done = env.step(output)
+                fitness -= error
+
+        if(fitness != 0.0):
+            fitness /= n_loop
 
         return fitness, history
 
