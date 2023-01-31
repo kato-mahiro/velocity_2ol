@@ -1,6 +1,8 @@
+from matplotlib.pyplot import hist
 import modneat
 import math
 import random
+import numpy as np
 
 class velocity_task_0:
     def __init__(self, network_type):
@@ -9,17 +11,17 @@ class velocity_task_0:
     
     def eval_fitness(self, net):
         n_loop = 10
-
         fitness = 0.0
+        history = []
         for n in range(n_loop):
-            history=[]
+            history.append([])
             net.reset()
             env = velocity_env(self.order)
             input = env.reset()
             is_done = False
             while(not is_done):
                 output = net.activate([1, input])
-                history.append([env.target_v, output])
+                history[-1].append({'target': env.target_v, 'output':output})
                 input, error, is_done = env.step(output)
                 fitness -= error
 
@@ -68,8 +70,8 @@ class velocity_env:
             self.a = 0
         elif(self.order == 2):
             self.target_v = random.uniform(0.0, 1.0)
-            self.a = random.uniform(-0.1, 0.1)
-            self.asserted_stag = 10
+            self.a = np.random.normal(0.0, 0.03)
+            self.asserted_stag = 100
             self.stag = 1
             self.setting_change_prob = 1.0
         
