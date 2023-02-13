@@ -4,11 +4,11 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 0 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 1 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
-TARGET_V = 0.05
+TARGET_V = 0.05 #Lv:1の時の変化量
 TARGET_V_UPPER_LIMIT = 0.1
 TARGET_V_LOWER_LIMIT = 0.01
 LOOP_NUM = 1 #ネットワークをリセットして何回同一タスクを実行するか。
@@ -82,28 +82,31 @@ class velocity_env:
                 self.is_growing = False
             self.target_v = random.uniform(TARGET_V_LOWER_LIMIT, TARGET_V_UPPER_LIMIT)
 
-        return(self.target_v)
+        return(self.target)
     
     def step(self, net_output):
-        observation = self.target_v - net_output[0]
+        observation = self.target - net_output[0]
         error = abs(observation)
 
-        if(self.stag >= 0):
-            self.stag -= 1
+        if(self.lv == 0):
+            pass
         else:
-            if(self.is_growing):
-                self.target += self.target_v
+            if(self.stag >= 0):
+                self.stag -= 1
             else:
-                self.target -= self.target_v
+                if(self.is_growing):
+                    self.target += self.target_v
+                else:
+                    self.target -= self.target_v
 
-            if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
-                self.is_growing = False
-                self.change_num += 1
-                self.stag = 10 + (random.randint(-5,5))
-            elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
-                self.is_growing = True
-                self.change_num += 1
-                self.stag = 10 + (random.randint(-5,5))
+                if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
+                    self.is_growing = False
+                    self.change_num += 1
+                    self.stag = 10 + (random.randint(-5,5))
+                elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
+                    self.is_growing = True
+                    self.change_num += 1
+                    self.stag = 10 + (random.randint(-5,5))
 
         self.step_num += 1
         if(self.lv == 0):
