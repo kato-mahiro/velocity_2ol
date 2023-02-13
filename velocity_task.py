@@ -4,26 +4,37 @@ import math
 import random
 import numpy as np
 
-class velocity_task_0:
+TASK_LV = 0 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
+TARGET_UPPER_LIMIT = 1
+TARGET_LOWER_LIMIT = 0
+TARGET_V = 0.05
+TARGET_V_UPPER_LIMIT = 0.1
+TARGET_V_LOWER_LIMIT = 0.01
+LOOP_NUM = 1 #ネットワークをリセットして何回同一タスクを実行するか。
+
+class velocity_task_N:
     def __init__(self, network_type):
         self.network_type = network_type
-        self.order = 0
     
     def eval_fitness(self, net):
-        n_loop = 10
+        n_loop = LOOP_NUM
         fitness = 0.0
         history = []
         for n in range(n_loop):
             history.append([])
             net.reset()
-            env = velocity_env(self.order)
+            env = velocity_env()
             input = env.reset()
             is_done = False
+            env_step = 0
             while(not is_done):
+                env_step += 1
                 output = net.activate([1, input])
-                history[-1].append({'target': env.target_v, 'output':output})
+                history[-1].append({'target': env.target, 'output':output})
                 input, error, is_done = env.step(output)
                 fitness -= error
+            fitness /= env_step #適応度をステップ数に応じて正規化
 
         if(fitness != 0.0):
             fitness /= n_loop
@@ -43,73 +54,67 @@ class velocity_task_0:
     def show_results(self, best_genome, config, stats, out_dir):
         pass
 
-class velocity_task_1(velocity_task_0):
-    def __init__(self, network_type):
-        super().__init__(network_type)
-        self.order = 1
-
-class velocity_task_2(velocity_task_0):
-    def __init__(self, network_type):
-        super().__init__(network_type)
-        self.order = 2
-
 class velocity_env:
-    def __init__(self, order:int):
-        self.order = order
-        self.target_v = 0
+    def __init__(self):
+        self.lv = TASK_LV
+        self.target = 0
         self.a = 0
 
     def reset(self):
         self.step_num = 1
-        self.a_stag = 1
-        if(self.order == 0):
-            self.target_v = 0.5
-            self.a = 0
-        elif(self.order == 1):
-            self.target_v = random.uniform(0.0, 1.0)
-            self.a = 0
-        elif(self.order == 2):
-            self.target_v = random.uniform(0.0, 1.0)
-            self.a = np.random.normal(0.0, 0.03)
-            self.asserted_stag = 100
-            self.stag = 1
-            self.setting_change_prob = 1.0
-        
-        self.pre_target_v = None
-        
+        self.change_num = 0
+        self.stag = 10 + (random.randint(-5,5))
+        if(self.lv == 0):
+            self.target = (TARGET_UPPER_LIMIT + TARGET_LOWER_LIMIT) / 2
+            self.target_v = 0
+        elif(self.lv == 1):
+            self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            if(self.target == TARGET_LOWER_LIMIT):
+                self.is_growing = True
+            else:
+                self.is_growing = False
+            self.target_v = TARGET_V
+        elif(self.lv == 2):
+            self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            if(self.target == TARGET_LOWER_LIMIT):
+                self.is_growing = True
+            else:
+                self.is_growing = False
+            self.target_v = random.uniform(TARGET_V_LOWER_LIMIT, TARGET_V_UPPER_LIMIT)
+
         return(self.target_v)
     
     def step(self, net_output):
         observation = self.target_v - net_output[0]
         error = abs(observation)
 
-        if(self.order == 2):
-            self.target_v += self.a
-            if(self.target_v > 1.0):
-                self.target_v = 1.0
-            elif(self.target_v < 0.0):
-                self.target_v = 0.0
-            
-            #target_vがasserted_stagで設定したステップ数以上変化していない場合には一定確率でaを変更
-            if(self.pre_target_v == self.target_v):
-                self.stag += 1
+        if(self.stag >= 0):
+            self.stag -= 1
+        else:
+            if(self.is_growing):
+                self.target += self.target_v
             else:
-                self.stag = 1
-            if(self.stag >= self.asserted_stag):
-                if random.random() < self.setting_change_prob:
-                    if(self.target_v == 1.0):
-                        self.a = random.uniform(-0.2, 0.0)
-                    elif(self.target_v == 0.0):
-                        self.a = random.uniform(0.0, 0.2)
-                    else:
-                        self.a = random.uniform(-0.2, 0.2)
+                self.target -= self.target_v
 
-        self.pre_target_v = self.target_v
+            if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
+                self.is_growing = False
+                self.change_num += 1
+                self.stag = 10 + (random.randint(-5,5))
+            elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
+                self.is_growing = True
+                self.change_num += 1
+                self.stag = 10 + (random.randint(-5,5))
 
         self.step_num += 1
-        if(self.step_num <= 100):
-            done = False
+        if(self.lv == 0):
+            if(self.step_num <= 100):
+                done = False
+            else:
+                done = True
         else:
-            done = True
+            if(self.change_num <= PHASE_NUM ):
+                done = False
+            else:
+                done = True
 
         return observation, error, done
