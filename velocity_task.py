@@ -4,14 +4,17 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 1 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 2 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
 TARGET_V = 0.05 #Lv:1の時の変化量
-TARGET_V_UPPER_LIMIT = 0.1
-TARGET_V_LOWER_LIMIT = 0.01
-LOOP_NUM = 1 #ネットワークをリセットして何回同一タスクを実行するか。
+TARGET_V_UPPER_LIMIT = 0.06
+TARGET_V_LOWER_LIMIT = 0.04
+LOOP_NUM = 10 #ネットワークをリセットして何回同一タスクを実行するか。
+
+def sigmoid(x):
+    return 1/ (1+np.exp(-x))
 
 class velocity_task_N:
     def __init__(self, network_type):
@@ -19,9 +22,10 @@ class velocity_task_N:
     
     def eval_fitness(self, net):
         n_loop = LOOP_NUM
-        fitness = 0.0
+        total_fitness = 0.0
         history = []
         for n in range(n_loop):
+            fitness = 0.0
             history.append([])
             net.reset()
             env = velocity_env()
@@ -30,16 +34,17 @@ class velocity_task_N:
             env_step = 0
             while(not is_done):
                 env_step += 1
+                input = sigmoid(input)
                 output = net.activate([1, input])
-                history[-1].append({'target': env.target, 'output':output})
+                history[-1].append({'target': env.target, 'output':output, 'input': input })
                 input, error, is_done = env.step(output)
                 fitness -= error
             fitness /= env_step #適応度をステップ数に応じて正規化
+            total_fitness += fitness
 
-        if(fitness != 0.0):
-            fitness /= n_loop
+        total_fitness /= n_loop
 
-        return fitness, history
+        return total_fitness, history
 
     def eval_genomes(self, genomes, config):
         for genome_id, genome in genomes:
@@ -63,7 +68,7 @@ class velocity_env:
     def reset(self):
         self.step_num = 1
         self.change_num = 0
-        self.stag = 10 + (random.randint(-5,5))
+        self.stag = 50 + (random.randint(-10,10))
         if(self.lv == 0):
             self.target = (TARGET_UPPER_LIMIT + TARGET_LOWER_LIMIT) / 2
             self.target_v = 0
@@ -102,11 +107,11 @@ class velocity_env:
                 if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
                     self.is_growing = False
                     self.change_num += 1
-                    self.stag = 10 + (random.randint(-5,5))
+                    self.stag = 50 + (random.randint(-10,10))
                 elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
                     self.is_growing = True
                     self.change_num += 1
-                    self.stag = 10 + (random.randint(-5,5))
+                    self.stag = 50 + (random.randint(-10,10))
 
         self.step_num += 1
         if(self.lv == 0):
