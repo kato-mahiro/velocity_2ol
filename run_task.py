@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import shutil
+from datetime import datetime
 
 # The NEAT-Python library imports
 import modneat
@@ -21,7 +22,7 @@ def create_parser():
     parser.add_argument('--savedir', type=str, help='', default='./results')
     parser.add_argument('--task', type=str, help='', default='velocity_task.velocity_task_N')
     parser.add_argument('--generation', type=int, help='', default=10000)
-    parser.add_argument('--run_id', type=int, help='', default=0)
+    parser.add_argument('--run_id', type=str, help='', default='')
     parser.add_argument('--num_workers', type=int, help='', default=0)
 
     args = parser.parse_args()
@@ -88,11 +89,15 @@ if __name__ == '__main__':
     CHECKPOINT_LOAD_PATH = args.checkpoint_load
     NUM_WORKERS = args.num_workers
 
+    if args.run_id == '':
+        now = datetime.now()
+        args.run_id = now.strftime("%y%m%d%H%M%S")
+
     # The directory to store outputs
     if(CHECKPOINT_LOAD_PATH == ''):
-        out_dir = os.path.join(local_dir, args.savedir, args.task + '_' + args.network + '_' + str(args.run_id))
+        out_dir = os.path.join(local_dir, args.savedir, args.task + '_' + args.network + '_' + args.run_id)
     else:
-        out_dir = os.path.join(local_dir, args.savedir, '[CONTINUED]' + args.task + '_' + args.network + '_' + str(args.run_id))
+        out_dir = os.path.join(local_dir, args.savedir, '[CONTINUED]' + args.task + '_' + args.network + '_' + args.run_id)
 
     # Clean results of previous run if any or init the ouput directory
     clean_output()
