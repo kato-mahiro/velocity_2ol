@@ -4,7 +4,7 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 2 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 1 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
@@ -73,14 +73,16 @@ class velocity_env:
             self.target = (TARGET_UPPER_LIMIT + TARGET_LOWER_LIMIT) / 2
             self.target_v = 0
         elif(self.lv == 1):
-            self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            #self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            self.target = TARGET_LOWER_LIMIT
             if(self.target == TARGET_LOWER_LIMIT):
                 self.is_growing = True
             else:
                 self.is_growing = False
             self.target_v = TARGET_V
         elif(self.lv == 2):
-            self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            #self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
+            self.target = TARGET_LOWER_LIMIT
             if(self.target == TARGET_LOWER_LIMIT):
                 self.is_growing = True
             else:
