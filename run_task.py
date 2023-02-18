@@ -23,6 +23,7 @@ def create_parser():
     parser.add_argument('--task', type=str, help='', default='velocity_task.velocity_task_N')
     parser.add_argument('--generation', type=int, help='', default=10000)
     parser.add_argument('--run_id', type=str, help='', default='')
+    parser.add_argument('--comment', type=str, help='', default='no comment')
     parser.add_argument('--num_workers', type=int, help='', default=0)
 
     args = parser.parse_args()
@@ -33,6 +34,10 @@ def run_experiment(config_file, num_workers):
     Arguments:
         config_file: the path to the file with experiment configuration
     """
+    # Save comment.
+    with open(out_dir + '/comment.txt' ,'a') as f:
+        f.write('date: ' + NOW.strftime("%y-%m-%d-%H:%M:%S\n") )
+        f.write(COMMAND)
 
     # Load configuration.
     config = modneat.Config(GENOME_TYPE, modneat.DefaultReproduction,
@@ -47,7 +52,7 @@ def run_experiment(config_file, num_workers):
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(modneat.StdOutReporter(True))
-    p.add_reporter(modneat.FileOutReporter(True, out_dir + '/resuots.txt'))
+    p.add_reporter(modneat.FileOutReporter(True, out_dir + '/results.txt'))
     stats = modneat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(modneat.Checkpointer(savedir=out_dir, stats=stats, generation_interval=CHECKPOINT_INTERVAL,\
@@ -88,10 +93,11 @@ if __name__ == '__main__':
     CHECKPOINT_INTERVAL = args.checkpoint_interval
     CHECKPOINT_LOAD_PATH = args.checkpoint_load
     NUM_WORKERS = args.num_workers
+    COMMAND = ' '.join(sys.argv)
+    NOW = datetime.now()
 
     if args.run_id == '':
-        now = datetime.now()
-        args.run_id = now.strftime("%y%m%d%H%M%S")
+        args.run_id = NOW.strftime("%y%m%d%H%M%S")
 
     # The directory to store outputs
     if(CHECKPOINT_LOAD_PATH == ''):
