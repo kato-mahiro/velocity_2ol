@@ -11,7 +11,7 @@ TARGET_LOWER_LIMIT = 0
 TARGET_V = 0.05 #Lv:1の時の変化量
 TARGET_V_UPPER_LIMIT = 0.06
 TARGET_V_LOWER_LIMIT = 0.04
-LOOP_NUM = 10 #ネットワークをリセットして何回同一タスクを実行するか。
+LOOP_NUM = 1 #ネットワークをリセットして何回同一タスクを実行するか。
 
 def sigmoid(x):
     return 1/ (1+np.exp(-x))
@@ -35,7 +35,7 @@ class velocity_task_N:
             while(not is_done):
                 env_step += 1
                 input = sigmoid(input)
-                output = net.activate([1, input])
+                output = net.activate([input])
                 history[-1].append({'target': env.target, 'output':output, 'input': input })
                 input, error, is_done = env.step(output)
                 fitness -= error
