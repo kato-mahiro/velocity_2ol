@@ -37,7 +37,7 @@ def run_experiment(config_file, num_workers):
     # Save comment.
     with open(out_dir + '/comment.txt' ,'a') as f:
         f.write('date: ' + NOW.strftime("%y-%m-%d-%H:%M:%S\n") )
-        f.write(COMMAND)
+        f.write(COMMAND.replace('--', '\n--'))
 
     # Load configuration.
     config = modneat.Config(GENOME_TYPE, modneat.DefaultReproduction,
@@ -107,6 +107,9 @@ if __name__ == '__main__':
 
     # Clean results of previous run if any or init the ouput directory
     clean_output()
+
+    # Save config file
+    shutil.copy(CONFIG_PATH, out_dir)
 
     # Run the experiment
     run_experiment(CONFIG_PATH, NUM_WORKERS)
