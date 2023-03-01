@@ -4,14 +4,14 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 1 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 3 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
 TARGET_V = 0.05 #Lv:1の時の変化量
 TARGET_V_UPPER_LIMIT = 0.06
 TARGET_V_LOWER_LIMIT = 0.04
-LOOP_NUM = 1 #ネットワークをリセットして何回同一タスクを実行するか。
+LOOP_NUM = 5 #ネットワークをリセットして何回同一タスクを実行するか。
 
 def sigmoid(x):
     return 1/ (1+np.exp(-x))
@@ -80,7 +80,7 @@ class velocity_env:
             else:
                 self.is_growing = False
             self.target_v = TARGET_V
-        elif(self.lv == 2):
+        elif(self.lv == 2 or self.lv == 3):
             #self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
             self.target = TARGET_LOWER_LIMIT
             if(self.target == TARGET_LOWER_LIMIT):
@@ -113,6 +113,10 @@ class velocity_env:
                 elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
                     self.is_growing = True
                     self.change_num += 1
+
+                    if(self.lv == 3):
+                        self.target_v = random.uniform(TARGET_V_LOWER_LIMIT, TARGET_V_UPPER_LIMIT)
+
                     self.stag = 50 + (random.randint(-10,10))
 
         self.step_num += 1
