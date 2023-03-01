@@ -107,10 +107,12 @@ class velocity_env:
                     self.target -= self.target_v
 
                 if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
+                    self.target = TARGET_UPPER_LIMIT
                     self.is_growing = False
                     self.change_num += 1
                     self.stag = 50 + (random.randint(-10,10))
                 elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
+                    self.target = TARGET_LOWER_LIMIT
                     self.is_growing = True
                     self.change_num += 1
 
