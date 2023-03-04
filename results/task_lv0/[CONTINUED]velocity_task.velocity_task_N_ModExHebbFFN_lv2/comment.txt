@@ -1,0 +1,7 @@
+date: 23-03-03-15:05:39
+run_task.py 
+--savedir results/task_lv0/ 
+--run_id lv2 
+--checkpoint_load ./simple_models/checkpoint-lv2 
+--network ModExHebbFFN 
+--config ./configs/modexhebb_genome.ini
