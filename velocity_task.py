@@ -4,13 +4,13 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 3 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 2 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
 TARGET_V = 0.05 #Lv:1の時の変化量
-TARGET_V_UPPER_LIMIT = 0.06
-TARGET_V_LOWER_LIMIT = 0.04
+TARGET_V_UPPER_LIMIT = 0.1
+TARGET_V_LOWER_LIMIT = 0.01
 LOOP_NUM = 5 #ネットワークをリセットして何回同一タスクを実行するか。
 
 def sigmoid(x):
