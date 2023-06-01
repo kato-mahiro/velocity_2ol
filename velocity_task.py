@@ -4,14 +4,25 @@ import math
 import random
 import numpy as np
 
-TASK_LV = 2 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+TASK_LV = 5 #LV.0: 進化のみ， Lv.1: 学習のみ、Lv.2: 二次学習も、という感じ
+#Lv.0 ターゲットが変動しない
+#Lv.1 ターゲットが変動する。ただし、変動速度は全世代で一定
+#Lv.2 ターゲットが変動が変動する。ただし、変動速度は各世代でランダムに決定
+#Lv.3 ターゲットが変動する。ただし、変動速度は各変動ごとにランダムに決定
+#Lv.4(?) ターゲットが変動する。ただし、変動の加速度は全世代で一定
+#Lv.5(?) ターゲットが変動する。変動の加速度は各世代ごとにランダムに決定
+
 PHASE_NUM = 10 #生涯内で何回変更が生じるか. ステップ数に応じて正規化することを忘れないように
 TARGET_UPPER_LIMIT = 1
 TARGET_LOWER_LIMIT = 0
-TARGET_V = 0.05 #Lv:1の時の変化量
+TARGET_V = 0.01 #Lv:1の時の変化量
 TARGET_V_UPPER_LIMIT = 0.1
 TARGET_V_LOWER_LIMIT = 0.01
-LOOP_NUM = 5 #ネットワークをリセットして何回同一タスクを実行するか。
+TARGET_A = 0.005 #ターゲットの加速度
+TARGET_A_UPPER_LIMIT = 0.01
+TARGET_A_LOWER_LIMIT = 0.001
+
+LOOP_NUM =  10 #ネットワークをリセットして何回同一タスクを実行するか。
 
 def sigmoid(x):
     return 1/ (1+np.exp(-x))
@@ -72,7 +83,7 @@ class velocity_env:
         if(self.lv == 0):
             self.target = (TARGET_UPPER_LIMIT + TARGET_LOWER_LIMIT) / 2
             self.target_v = 0
-        elif(self.lv == 1):
+        elif(self.lv == 1 or self.lv == 4 or self.lv == 5):
             #self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
             self.target = TARGET_LOWER_LIMIT
             if(self.target == TARGET_LOWER_LIMIT):
@@ -80,6 +91,12 @@ class velocity_env:
             else:
                 self.is_growing = False
             self.target_v = TARGET_V
+
+            if(self.lv == 4):
+                self.target_a = TARGET_A
+            elif(self.lv == 5):
+                self.target_a = random.uniform(TARGET_A_LOWER_LIMIT, TARGET_A_UPPER_LIMIT)
+
         elif(self.lv == 2 or self.lv == 3):
             #self.target = random.choice([TARGET_UPPER_LIMIT, TARGET_LOWER_LIMIT])
             self.target = TARGET_LOWER_LIMIT
@@ -105,16 +122,28 @@ class velocity_env:
                     self.target += self.target_v
                 else:
                     self.target -= self.target_v
+                
+                #加速度の実装
+                if(self.lv == 4 or self.lv == 5):
+                    self.target_v += self.target_a
 
                 if(self.is_growing and self.target >= TARGET_UPPER_LIMIT):
                     self.target = TARGET_UPPER_LIMIT
                     self.is_growing = False
                     self.change_num += 1
                     self.stag = 50 + (random.randint(-10,10))
+
+                    #速度のリセット
+                    if(self.lv == 4 or self.lv == 5):
+                        self.target_v = TARGET_V
+
                 elif(not self.is_growing and self.target <= TARGET_LOWER_LIMIT):
                     self.target = TARGET_LOWER_LIMIT
                     self.is_growing = True
                     self.change_num += 1
+
+                    if(self.lv == 4 or self.lv == 5):
+                        self.target_v = TARGET_V
 
                     if(self.lv == 3):
                         self.target_v = random.uniform(TARGET_V_LOWER_LIMIT, TARGET_V_UPPER_LIMIT)
