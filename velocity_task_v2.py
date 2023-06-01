@@ -40,7 +40,7 @@ class velocity_task_N:
             while(not is_done):
                 env_step += 1
                 #input = sigmoid(input)
-                output = net.activate([input])
+                output = net.activate([input, 1.0])
                 history[-1].append({'target': env.target, 'output':output, 'input': input })
                 input, error, is_done = env.step(output)
                 fitness -= error
